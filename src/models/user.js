@@ -16,17 +16,20 @@ module.exports = (sequelize, DataTypes) => {
   User.init({
     userId: {
       type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       unique: true,
-      required: true
+      required: true,
+      isUUID: 4
     },
     email: {
       type: DataTypes.STRING,
       required: true,
-      unique: true
+      unique: true,
+      isEmail: true,
     },
     active: {
       type: DataTypes.BOOLEAN,
-      default: false
+      defaultValue: false
     },
     password: {
       type: DataTypes.STRING,
@@ -34,11 +37,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     resetPasswordToken: {
       type: DataTypes.STRING,
-      default: null
+      defaultValue: null
     },
     resetPasswordExpires: {
       type: DataTypes.DATE,
-      default: null
+      defaultValue: null
+    },
+    emailToken: {
+      type: DataTypes.STRING,
+      defaultValue: null
+    },
+    emailTokenExpires: {
+      type: DataTypes.DATE,
+      defaultValue: null
     }
   }, {
     sequelize,

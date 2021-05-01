@@ -1,19 +1,9 @@
 require("dotenv").config();
-const nodemailer = require("nodemailer");
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 async function sendEmail(email, code) {
   try {
-    const smtpEndpoint = "smtp.sendgrid.net";
-
-    const port = 465;
-
-    const senderAddress = "YOU <you@yourdomain.com>";
-
-    var toAddress = email;
-
-    const smtpUsername = "apikey";
-
-    const smtpPassword = process.env.SG_APIKEY;
 
     var subject = "Verify your email";
 
@@ -25,26 +15,15 @@ async function sendEmail(email, code) {
       </body>
     </html>`;
 
-    // Create the SMTP transport.
-    let transporter = nodemailer.createTransport({
-      host: smtpEndpoint,
-      port: port,
-      secure: true, // true for 465, false for other ports
-      auth: {
-        user: smtpUsername,
-        pass: smtpPassword,
-      },
-    });
-
-    // Specify the fields in the email.
-    let mailOptions = {
-      from: senderAddress,
-      to: toAddress,
+    const msg = {
+      to: email,
+      from: 'dydi_1234@hotmail.fr', // Use the email address or domain you verified above
       subject: subject,
+      text: 'and easy to do anywhere, even with Node.js',
       html: body_html,
     };
 
-    let info = await transporter.sendMail(mailOptions);
+    await sgMail.send(msg);
     return { error: false };
   } catch (error) {
     console.error("send-email-error", error);

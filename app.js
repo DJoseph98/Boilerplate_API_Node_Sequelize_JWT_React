@@ -1,13 +1,14 @@
+require("dotenv").config();
 const express = require('express')
 const app = express()
 const cors = require('cors')
-const db = require('./models/index')
-require("dotenv").config();
+const db = require('./src/models/index')
 const PORT = process.env.PORT
 
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({extended: true}));
+app.use('/users', require('./src/routes/users'))
 
 app.get('/', (req, res) => {
     res.send({
