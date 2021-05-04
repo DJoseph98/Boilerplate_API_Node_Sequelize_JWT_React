@@ -1,17 +1,21 @@
 require("dotenv").config()
 const Joi = require('joi')
-const { sendEmail } = require("../users/helpers/mailer")
-const { hashPassword } = require("../users/helpers/pwd_hasher")
+const { sendEmail } = require("../utils/mailer")
+const { hashPassword } = require("../utils/pwd_hasher")
+const { generateJwt } = require('../utils/generateJwt')
 const db = require('../models/index')
+const { Op } = require('sequelize')
 const moment = require('moment')
 const bcrypt = require('bcrypt')
+const { v4: uuid } = require('uuid')
 
 const User = db.sequelize.models.User
 
 const userSchema = Joi.object().keys({
     email: Joi.string().email({ minDomainSegments: 2 }),
     password: Joi.string().required().min(8),
-    confirmPassword: Joi.string().valid(Joi.ref('password')).required()
+    confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
+    referrer: Joi.string(),
 })
 
 const SignUp = async (req, res) => {
@@ -34,21 +38,22 @@ const SignUp = async (req, res) => {
         }
 
         const hash = await hashPassword(result.value.password)
+
         delete result.value.confirmPassword
         result.value.password = hash
 
-        let code = Math.floor(100000 + Math.random() * 900000)
-        let expiry = moment().add(15, 'm')
+        const code = uuid()
+        const expiry = moment().add(15, 'm')
 
         const sendCode = await sendEmail(result.value.email, code)
 
         if (sendCode.error) {
-            console.log(error)
             return res.status(500).json({
                 error: true,
                 message: "Couldn't send verification email."
             })
         }
+
         result.value.emailToken = code
         result.value.emailTokenExpires = expiry
 
@@ -56,7 +61,8 @@ const SignUp = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Registration Success"
+            message: "Registration Success",
+            referralCode: result.value.referralCode
         })
     } catch (error) {
         console.log(error)
@@ -78,7 +84,7 @@ const Login = async (req, res) => {
         }
 
         const user = await User.findOne({ where: { email: email } })
-        
+
         if (!user) {
             return res.status(404).json({
                 error: true,
@@ -102,9 +108,22 @@ const Login = async (req, res) => {
             })
         }
 
+        const { error, token } = await generateJwt(user.email, user.userId)
+        if (error) {
+            return res.status(500).json({
+                error: true,
+                message: "Couldn't create access token. Please try again later"
+            })
+        }
+
+        user.accessToken = token
+
+        await user.save()
+
         return res.send({
             success: true,
-            message: "User logged in successfully"
+            message: "User logged in successfully",
+            accessToken: token
         })
     } catch (error) {
         console.error(error)
@@ -117,17 +136,21 @@ const Login = async (req, res) => {
 
 const Activate = async (req, res) => {
     try {
-        const { email, code } = req.body
-        if (!email || !code) {
+        const { id } = req.params
+        console.log(id)
+        if (!id) {
             return res.status(400).json({
                 error: true,
                 message: "Please make a valid request"
             })
         }
+
         const user = await User.findOne({
             where: {
-                email: email,
-                emailToken: code
+                emailToken: id,
+                emailTokenExpires: {
+                    [Op.gte]: moment()
+                }
             }
         })
 
@@ -137,13 +160,6 @@ const Activate = async (req, res) => {
                 message: "Invalid details"
             })
         } else {
-            if (moment().isAfter(moment(user.emailTokenExpires))) {
-                return res.status(400).json({
-                    error: true,
-                    message: "Email token expired"
-                })
-            }
-
             if (user.active) {
                 return res.status(400).json({
                     error: true,
@@ -163,6 +179,7 @@ const Activate = async (req, res) => {
             })
         }
     } catch (error) {
+        console.log(error)
         return res.status(500).json({
             error: true,
             message: error.message
@@ -170,4 +187,126 @@ const Activate = async (req, res) => {
     }
 }
 
-module.exports = { SignUp, Login, Activate }
+const ForgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body
+        if (!email) {
+            return res.status(400).json({
+                error: true,
+                message: "Email required"
+            })
+        }
+
+        const user = await User.findOne({ where: { email: email } })
+
+        if (!user) {
+            return res.status(400).json({
+                error: true,
+                message: "If that email address is in our database, we will send you an email to reset your password"
+            })
+        }
+
+        const code = Math.floor(100000 + Math.random() * 900000)
+        const response = await sendEmail(user.email, code)
+
+        if (response.error) {
+            return res.status(500).json({
+                error: true,
+                message: "Couldn't send mail. Please try again later."
+            })
+        }
+
+        const expiry = moment().add(15, 'm')
+        user.resetPasswordToken = code
+        user.resetPasswordExpires = expiry
+
+        await user.save()
+
+        return res.status(200).json({
+            success: true,
+            message: "If that email address is in our database, we will send you an email to reset your password"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: error.message
+        })
+    }
+}
+
+const ResetPassword = async (req, res) => {
+    try {
+        const { token, newPassword, confirmPassword } = req.body
+        if (!token || !newPassword || !confirmPassword) {
+            return res.status(403).json({
+                error: true,
+                message: "Couldn't process request. Please provide all mandatory fields"
+            })
+        }
+
+        const user = await User.findOne({
+            where:
+            {
+                resetPasswordToken: token,
+                resetPasswordExpires: {
+                    [Op.gte]: moment()
+                }
+            }
+        })
+
+        if (!user) {
+            return res.status(400).json({
+                error: true,
+                message: "Password reset token is invalid or has expired."
+            })
+        }
+
+        if (newPassword != confirmPassword) {
+            return res.status(400).json({
+                error: true,
+                message: "Passwords didn't match"
+            })
+        }
+
+        const hash = await hashPassword(newPassword)
+        user.password = hash
+        user.resetPasswordToken = null,
+            user.resetPasswordExpires = null
+
+        await user.save()
+
+        return res.status(200).json({
+            success: true,
+            message: "Password has been changed"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: error.message,
+        });
+    }
+}
+
+const Logout = async (req, res) => {
+    try {
+        const { id } = req.decoded
+
+        let user = await User.findOne({ userId: id })
+
+        user.accessToken = ""
+
+        await user.save()
+
+        return res.status(200).json({
+            success: true,
+            message: "User Logged out"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: error.message
+        })
+    }
+}
+
+module.exports = { SignUp, Login, Activate, ForgotPassword, ResetPassword, Logout }

@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config()
 const express = require('express')
 const app = express()
 const cors = require('cors')
@@ -9,12 +9,6 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({extended: true}));
 app.use('/users', require('./src/routes/users'))
-
-app.get('/', (req, res) => {
-    res.send({
-        error: false,
-        message:"home"})
-})
 
 app.listen(PORT, () => {
     console.log('Server started listening on PORT : ' + PORT)

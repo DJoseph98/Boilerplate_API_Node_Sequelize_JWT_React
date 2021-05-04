@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       isUUID: 4
     },
+    accessToken: {
+      type: DataTypes.STRING,
+      defaultValue: null
+    },
     email: {
       type: DataTypes.STRING,
       required: true,
@@ -50,7 +54,7 @@ module.exports = (sequelize, DataTypes) => {
     emailTokenExpires: {
       type: DataTypes.DATE,
       defaultValue: null
-    }
+    },
   }, {
     sequelize,
     modelName: 'User',
