@@ -1,5 +1,4 @@
 require("dotenv").config()
-const Joi = require('joi')
 const { sendEmail } = require("../utils/mailer")
 const { hashPassword } = require("../utils/pwd_hasher")
 const { generateJwt } = require('../utils/generateJwt')
@@ -8,19 +7,13 @@ const { Op } = require('sequelize')
 const moment = require('moment')
 const bcrypt = require('bcrypt')
 const { v4: uuid } = require('uuid')
+const  { signUpSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validations/userValidations')
 
 const User = db.sequelize.models.User
 
-const userSchema = Joi.object().keys({
-    email: Joi.string().email({ minDomainSegments: 2 }),
-    password: Joi.string().required().min(8),
-    confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
-    referrer: Joi.string(),
-})
-
 const SignUp = async (req, res) => {
     try {
-        let result = userSchema.validate(req.body)
+        let result = signUpSchema.validate(req.body)
         if (result.error) {
             return res.status(400).json({
                 error: true,
@@ -46,7 +39,7 @@ const SignUp = async (req, res) => {
         const expiry = moment().add(15, 'm')
 
         const sendCode = await sendEmail(result.value.email, code)
-
+        
         if (sendCode.error) {
             return res.status(500).json({
                 error: true,
@@ -61,11 +54,9 @@ const SignUp = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Registration Success",
-            referralCode: result.value.referralCode
+            message: "Registration Success"
         })
     } catch (error) {
-        console.log(error)
         return res.status(500).json({
             error: true,
             message: "Cannot Register"
@@ -75,25 +66,29 @@ const SignUp = async (req, res) => {
 
 const Login = async (req, res) => {
     try {
-        const { email, password } = req.body
-        if (!email || !password) {
-            return res.status(404).json({
+
+        const result = loginSchema.validate(req.body)
+
+        if (result.error) {
+            return res.status(400).json({
                 error: true,
-                message: "Cannot authorize user."
+                message: result.error.message
             })
         }
 
+        const { email, password } = req.body
+       
         const user = await User.findOne({ where: { email: email } })
 
         if (!user) {
-            return res.status(404).json({
+            return res.status(500).json({
                 error: true,
                 message: "Account not found"
             })
         }
 
         if (!user.active) {
-            return res.status(404).json({
+            return res.status(500).json({
                 error: true,
                 message: "You must verify your email to activate your account"
             })
@@ -102,7 +97,7 @@ const Login = async (req, res) => {
         const isValid = await bcrypt.compareSync(password, user.password);
 
         if (!isValid) {
-            return res.status(400).json({
+            return res.status(500).json({
                 error: true,
                 message: "Invalid password"
             })
@@ -137,7 +132,7 @@ const Login = async (req, res) => {
 const Activate = async (req, res) => {
     try {
         const { id } = req.params
-        console.log(id)
+        
         if (!id) {
             return res.status(400).json({
                 error: true,
@@ -189,13 +184,16 @@ const Activate = async (req, res) => {
 
 const ForgotPassword = async (req, res) => {
     try {
-        const { email } = req.body
-        if (!email) {
+        const result = forgotPasswordSchema.validate(req.body)
+
+        if (result.error) {
             return res.status(400).json({
                 error: true,
-                message: "Email required"
+                message: result.error.message
             })
         }
+
+        const { email } = req.body
 
         const user = await User.findOne({ where: { email: email } })
 
@@ -236,13 +234,17 @@ const ForgotPassword = async (req, res) => {
 
 const ResetPassword = async (req, res) => {
     try {
-        const { token, newPassword, confirmPassword } = req.body
-        if (!token || !newPassword || !confirmPassword) {
-            return res.status(403).json({
+
+        const result = resetPasswordSchema.validate(req.body)
+
+        if (result.error) {
+            return res.status(400).json({
                 error: true,
-                message: "Couldn't process request. Please provide all mandatory fields"
+                message: result.error.message
             })
         }
+
+        const { token, newPassword } = req.body
 
         const user = await User.findOne({
             where:
@@ -261,17 +263,10 @@ const ResetPassword = async (req, res) => {
             })
         }
 
-        if (newPassword != confirmPassword) {
-            return res.status(400).json({
-                error: true,
-                message: "Passwords didn't match"
-            })
-        }
-
         const hash = await hashPassword(newPassword)
         user.password = hash
         user.resetPasswordToken = null,
-            user.resetPasswordExpires = null
+        user.resetPasswordExpires = null
 
         await user.save()
 
@@ -290,8 +285,22 @@ const ResetPassword = async (req, res) => {
 const Logout = async (req, res) => {
     try {
         const { id } = req.decoded
+        
+        if(!id){
+            return res.status(400).json({
+                error: true,
+                message: "Missing token"
+            })
+        }
 
         let user = await User.findOne({ userId: id })
+
+        if(!user){
+            return res.status(400).json({
+                error: true,
+                message: "Invalid Token"
+            })
+        }
 
         user.accessToken = ""
 

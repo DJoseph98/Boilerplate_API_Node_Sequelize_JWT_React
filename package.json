@@ -10,10 +10,11 @@
     "bcrypt": "^5.0.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "crypto-random-string": "^4.0.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "jest": "^26.6.3",
+    "glob": "^7.1.6",
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.1",
@@ -26,6 +27,13 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "dev-server": "nodemon app.js"
+    "dev-server": "nodemon src/server.js",
+    "pretest": "cross-env NODE_ENV=test yarn db:reset",
+    "test": "cross-env NODE_ENV=test jest --detectOpenHandles --watch",
+    "db:reset": "yarn sequelize-cli db:drop && yarn sequelize-cli db:create"
+  },
+  "devDependencies": {
+    "jest": "^26.6.3",
+    "supertest": "^6.1.3"
   }
 }
