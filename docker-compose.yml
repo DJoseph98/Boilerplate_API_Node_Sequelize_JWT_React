@@ -1,12 +1,43 @@
-version: '3.1'
+version: "3.8"
 
 services:
-
-  db:
-    image: mariadb
-    container_name: db
-    restart: always
+  mysql-db:
+    image: mysql/mysql-server:5.7
+    container_name: mysql_DB_container
+    restart: unless-stopped
     ports:
-        - 3306:3306
+      - 3306:3306
+    expose:
+      - "3306"
+    networks:
+      - boilerplate
+    volumes:
+      - db_data:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: api
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: dbuserpwd
+      MYSQL_DATABASE: database_development
+  server:
+    build: ./server
+    container_name: server_container
+    depends_on: 
+      - mysql-db
+    ports:
+      - 8000:8000
+    expose:
+      - "8000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    links:
+      - mysql-db
+    networks:
+      - boilerplate
+
+volumes:
+  db_data:
+
+networks:
+  boilerplate:
+    driver: bridge
