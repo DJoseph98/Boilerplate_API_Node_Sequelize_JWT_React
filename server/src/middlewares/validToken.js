@@ -31,7 +31,7 @@ const validateToken = async (req, res, next) => {
         }
 
         let result = jwt.verify(token, process.env.JWT_SECRET, options)
-
+       
         if (!user.userId === result.id) {
             return res.status(401).json({
                 error: true,

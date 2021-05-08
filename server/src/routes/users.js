@@ -9,6 +9,7 @@ router.post('/login', UserController.Login)
 router.patch('/activate/:id', UserController.Activate)
 router.patch('/forgot', UserController.ForgotPassword)
 router.patch('/reset', UserController.ResetPassword)
+router.get('/fetchUser', validateToken, UserController.FetchUser)
 router.get("/logout", validateToken, UserController.Logout)
 
 module.exports = router

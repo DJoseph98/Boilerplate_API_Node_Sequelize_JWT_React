@@ -7,7 +7,8 @@ const { Op } = require('sequelize')
 const moment = require('moment')
 const bcrypt = require('bcrypt')
 const { v4: uuid } = require('uuid')
-const  { signUpSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validations/userValidations')
+const { signUpSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validations/userValidations')
+const jwt = require('jsonwebtoken')
 
 const User = db.sequelize.models.User
 
@@ -39,7 +40,7 @@ const SignUp = async (req, res) => {
         const expiry = moment().add(15, 'm')
 
         const sendCode = await sendEmail(result.value.email, code)
-        
+
         if (sendCode.error) {
             return res.status(500).json({
                 error: true,
@@ -77,7 +78,7 @@ const Login = async (req, res) => {
         }
 
         const { email, password } = req.body
-       
+
         const user = await User.findOne({ where: { email: email } })
 
         if (!user) {
@@ -118,7 +119,8 @@ const Login = async (req, res) => {
         return res.send({
             success: true,
             message: "User logged in successfully",
-            accessToken: token
+            token: token,
+            id: user.userId
         })
     } catch (error) {
         console.error(error)
@@ -132,7 +134,7 @@ const Login = async (req, res) => {
 const Activate = async (req, res) => {
     try {
         const { id } = req.params
-        
+
         if (!id) {
             return res.status(400).json({
                 error: true,
@@ -266,7 +268,7 @@ const ResetPassword = async (req, res) => {
         const hash = await hashPassword(newPassword)
         user.password = hash
         user.resetPasswordToken = null,
-        user.resetPasswordExpires = null
+            user.resetPasswordExpires = null
 
         await user.save()
 
@@ -285,8 +287,8 @@ const ResetPassword = async (req, res) => {
 const Logout = async (req, res) => {
     try {
         const { id } = req.decoded
-        
-        if(!id){
+
+        if (!id) {
             return res.status(400).json({
                 error: true,
                 message: "Missing token"
@@ -295,7 +297,7 @@ const Logout = async (req, res) => {
 
         let user = await User.findOne({ userId: id })
 
-        if(!user){
+        if (!user) {
             return res.status(400).json({
                 error: true,
                 message: "Invalid Token"
@@ -318,4 +320,40 @@ const Logout = async (req, res) => {
     }
 }
 
-module.exports = { SignUp, Login, Activate, ForgotPassword, ResetPassword, Logout }
+const FetchUser = async (req, res) => {
+    try {
+        const token = req.headers.authorization.split(" ")[1]
+
+        
+        const user = await User.findOne({
+            attributes: ['userId', 'email'],
+            where: {
+                accessToken: token
+            }
+        })
+
+        if (!user) {
+            return res.status(403).json({
+                error: true,
+                message: "Error getting user"
+            })
+        }
+
+        return res.send({
+            success: true,
+            message: "Succesfuly fetched user",
+            user: {
+                id: user.userId,
+                email: user.email
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(505).json({
+            error: true,
+            message: "Couldn't get data"
+        })
+    }
+}
+
+module.exports = { SignUp, Login, Activate, ForgotPassword, ResetPassword, Logout, FetchUser }
