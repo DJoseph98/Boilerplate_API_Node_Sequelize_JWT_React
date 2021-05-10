@@ -1,7 +1,6 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { logout } from '../actions/authAction';
-import { fetchUser } from '../api/authApi';
 
 const HomePage = () => {
     const dispatch = useDispatch();

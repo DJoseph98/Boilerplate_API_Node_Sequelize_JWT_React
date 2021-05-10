@@ -1,5 +1,5 @@
 require("dotenv").config()
-const { sendEmail } = require("../utils/mailer")
+const { sendEmail, sendResetPasswordEmail } = require("../utils/mailer")
 const { hashPassword } = require("../utils/pwd_hasher")
 const { generateJwt } = require('../utils/generateJwt')
 const db = require('../models/index')
@@ -54,7 +54,7 @@ const SignUp = async (req, res) => {
         await User.create(result.value)
 
         return res.status(200).json({
-            success: true,
+            error: false,
             message: "Registration Success"
         })
     } catch (error) {
@@ -117,13 +117,12 @@ const Login = async (req, res) => {
         await user.save()
 
         return res.send({
-            success: true,
+            error: false,
             message: "User logged in successfully",
             token: token,
             id: user.userId
         })
     } catch (error) {
-        console.error(error)
         return res.status(505).json({
             error: true,
             message: "Couldn't login. Please try again later."
@@ -171,12 +170,11 @@ const Activate = async (req, res) => {
             await user.save();
 
             return res.status(200).json({
-                success: true,
+                error: false,
                 message: "Account activated"
             })
         }
     } catch (error) {
-        console.log(error)
         return res.status(500).json({
             error: true,
             message: error.message
@@ -206,8 +204,8 @@ const ForgotPassword = async (req, res) => {
             })
         }
 
-        const code = Math.floor(100000 + Math.random() * 900000)
-        const response = await sendEmail(user.email, code)
+        const code = uuid()
+        const response = await sendResetPasswordEmail(user.email, code)
 
         if (response.error) {
             return res.status(500).json({
@@ -223,7 +221,7 @@ const ForgotPassword = async (req, res) => {
         await user.save()
 
         return res.status(200).json({
-            success: true,
+            error: false,
             message: "If that email address is in our database, we will send you an email to reset your password"
         })
     } catch (error) {
@@ -268,12 +266,12 @@ const ResetPassword = async (req, res) => {
         const hash = await hashPassword(newPassword)
         user.password = hash
         user.resetPasswordToken = null,
-            user.resetPasswordExpires = null
+        user.resetPasswordExpires = null
 
         await user.save()
 
         return res.status(200).json({
-            success: true,
+            error: false,
             message: "Password has been changed"
         })
     } catch (error) {
@@ -309,7 +307,7 @@ const Logout = async (req, res) => {
         await user.save()
 
         return res.status(200).json({
-            success: true,
+            error: false,
             message: "User Logged out"
         })
     } catch (error) {
@@ -324,7 +322,6 @@ const FetchUser = async (req, res) => {
     try {
         const token = req.headers.authorization.split(" ")[1]
 
-        
         const user = await User.findOne({
             attributes: ['userId', 'email'],
             where: {
@@ -340,7 +337,7 @@ const FetchUser = async (req, res) => {
         }
 
         return res.send({
-            success: true,
+            error: false,
             message: "Succesfuly fetched user",
             user: {
                 id: user.userId,
@@ -348,7 +345,6 @@ const FetchUser = async (req, res) => {
             }
         })
     } catch (error) {
-        console.error(error)
         return res.status(505).json({
             error: true,
             message: "Couldn't get data"

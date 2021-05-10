@@ -1,6 +1,6 @@
 import { SignIn } from '../api/authApi'
 
-export const setAuth = ({ token, user }) => ({
+export const setAuth = (token, user) => ({
     type: 'LOGIN',
     token,
     user
@@ -8,11 +8,11 @@ export const setAuth = ({ token, user }) => ({
 
 export const login = ({ email, password }) => {
     return async (dispatch) => {
-        const response = await SignIn(email, password)
-        if (response.error) {
-            return response.message
+        const {error, message, token, id } = await SignIn(email, password)
+        if (error) {
+            return message
         }
-        dispatch(setAuth(response))
+        dispatch(setAuth(token, id))
     }
 }
 

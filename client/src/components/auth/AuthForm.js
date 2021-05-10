@@ -1,7 +1,6 @@
 import { React, useState } from 'react';
 
 const AuthForm = (props) => {
-    const [error, setError] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -23,11 +22,10 @@ const AuthForm = (props) => {
     return (
         <div>
             <form className="form" onSubmit={handleSubmitForm}>
-                {error && <p className="form__error">{error}</p>}
                 <input className="text-input" type="email" name="email" placeholder="Email" value={email} onChange={handleEmailChange} required></input>
                 <input className="text-input" type="password" name="password" autoComplete="off" placeholder="Password" value={password} onChange={handlePasswordChange} required></input>
                 {props.signUp &&
-                    <input className="text-input" type="password" name="password_confirm" autoComplete="off" placeholder="Password confirmation" value={confirmPassword} onChange={handleConfirmPwdChange} required></input>
+                    <input className="text-input" type="password" name="confirmPassword" autoComplete="off" placeholder="Password confirmation" value={confirmPassword} onChange={handleConfirmPwdChange} required></input>
                 }
                 <button className="button">
                     {props.signUp ? "Sign Up" : "Sign In"}

@@ -4,8 +4,7 @@ import authReducer from '../reducers/authReducer';
 //import userReducer from '../reducers/userReducer';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import storage from "redux-persist/lib/storage";
-import { createTransform, persistReducer } from "redux-persist";
-import { fetchUser } from '../api/authApi';
+import { persistReducer } from "redux-persist";
 
 export const config = {
     key: 'root',
@@ -17,8 +16,7 @@ const composeEnhancer = composeWithDevTools(applyMiddleware(thunkMiddleware));
 
 const store = createStore(
     combineReducers({
-        auth: persistReducer(config, authReducer),
-        //user: userReducer
+        auth: persistReducer(config, authReducer)
     })
     , composeEnhancer);
 
