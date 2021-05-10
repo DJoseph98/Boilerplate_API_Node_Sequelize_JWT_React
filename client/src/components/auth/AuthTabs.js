@@ -7,7 +7,6 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
-import Container from '@material-ui/core/Container';
 import SignInPage from './SignInPage';
 import SignUpPage from './SignUpPage';
 
@@ -46,11 +45,11 @@ function a11yProps(index) {
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: theme.palette.background.paper,
-    display: "flex",
-    alignItems: "center",
-    flexDirection: "column",
+    backgroundColor: theme.palette.background.paper
   },
+  box: {
+    marginTop: '100px'
+}
 }));
 
 export default function FullWidthTabs() {
@@ -67,7 +66,7 @@ export default function FullWidthTabs() {
   };
 
   return (
-    <Container className={classes.root} maxWidth="sm" styles={{ 'margin-top': 50 }}>
+    <Box className={classes.box}>
       <AppBar position="static" color="default">
         <Tabs
           value={value}
@@ -93,6 +92,6 @@ export default function FullWidthTabs() {
           <SignUpPage />
         </TabPanel>
       </SwipeableViews>
-    </Container>
+    </Box>
   );
 }

@@ -1,6 +1,7 @@
 import { React, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ConfirmEmail } from '../../api/authApi';
+import Box from '@material-ui/core/Box';
 
 const ConfirmEmailPage = () => {
     const { id } = useParams()
@@ -14,11 +15,11 @@ const ConfirmEmailPage = () => {
     }, [id])
 
     return (
-        <div>
+        <Box style={{ marginTop: '100px' }}>
             {response && <p>{response}</p>}
             ConfirmEmailPage
             <Link to='/login'>Back to login page</Link>
-        </div>
+        </Box>
     );
 };
 
