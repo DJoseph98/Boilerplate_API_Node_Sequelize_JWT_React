@@ -1,4 +1,4 @@
-# Boilerplate_API_Node_Sequelize_JWT-
+# Boilerplate_API_Node_Sequelize_JWT_React
 
 Boilerplate fullstack app with user authentication
 
