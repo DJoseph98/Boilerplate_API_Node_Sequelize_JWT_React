@@ -24,11 +24,11 @@ const AppRouter = () => {
         <Container className={classes.root} maxWidth="sm" styles={{ 'margin-top': 50 }}>
             <Router>
                 <Switch>
+                    <PrivateRoute exact path='/' component={HomePage}></PrivateRoute>
                     <PublicRoute exact path='/login' component={AuthTabs}></PublicRoute>
                     <PublicRoute exact path='/email_sended' component={WaitingEmailPage}></PublicRoute>
                     <PublicRoute exact path='/reset_password/:id' component={ResetPasswordPage}></PublicRoute>
                     <PublicRoute exact path='/forgot_password' component={ForgotPasswordPage}></PublicRoute>
-                    <PrivateRoute exact path='/' component={HomePage}></PrivateRoute>
                     <PublicRoute exact path='/confirm_email/:id' component={ConfirmEmailPage}></PublicRoute>
                     <PublicRoute component={NotFoundPage}></PublicRoute>
                 </Switch>

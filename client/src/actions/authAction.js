@@ -1,18 +1,17 @@
 import { SignIn } from '../api/authApi'
 
-export const setAuth = (token, user) => ({
+export const setAuth = (token) => ({
     type: 'LOGIN',
-    token,
-    user
+    token
 })
 
 export const login = ({ email, password }) => {
     return async (dispatch) => {
-        const {error, message, token, id } = await SignIn(email, password)
+        const {error, message, token } = await SignIn(email, password)
         if (error) {
             return message
         }
-        dispatch(setAuth(token, id))
+        return dispatch(setAuth(token))
     }
 }
 

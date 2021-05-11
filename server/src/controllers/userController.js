@@ -53,7 +53,7 @@ const SignUp = async (req, res) => {
 
         await User.create(result.value)
 
-        return res.status(200).json({
+        return res.status(201).json({
             error: false,
             message: "Registration Success"
         })
@@ -116,7 +116,7 @@ const Login = async (req, res) => {
 
         await user.save()
 
-        return res.send({
+        return res.status(200).send({
             error: false,
             message: "User logged in successfully",
             token: token,
@@ -151,13 +151,13 @@ const Activate = async (req, res) => {
         })
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(500).json({
                 error: true,
                 message: "Invalid details"
             })
         } else {
             if (user.active) {
-                return res.status(400).json({
+                return res.status(500).json({
                     error: true,
                     message: "Account already activated"
                 })
@@ -198,7 +198,7 @@ const ForgotPassword = async (req, res) => {
         const user = await User.findOne({ where: { email: email } })
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(500).json({
                 error: true,
                 message: "If that email address is in our database, we will send you an email to reset your password"
             })
@@ -257,7 +257,7 @@ const ResetPassword = async (req, res) => {
         })
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(500).json({
                 error: true,
                 message: "Password reset token is invalid or has expired."
             })
@@ -296,7 +296,7 @@ const Logout = async (req, res) => {
         let user = await User.findOne({ userId: id })
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(500).json({
                 error: true,
                 message: "Invalid Token"
             })
@@ -345,7 +345,7 @@ const FetchUser = async (req, res) => {
             }
         })
     } catch (error) {
-        return res.status(505).json({
+        return res.status(500).json({
             error: true,
             message: "Couldn't get data"
         })

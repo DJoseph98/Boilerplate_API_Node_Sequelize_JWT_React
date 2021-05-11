@@ -17,7 +17,6 @@ const ConfirmEmailPage = () => {
     return (
         <Box style={{ marginTop: '100px' }}>
             {response && <p>{response}</p>}
-            ConfirmEmailPage
             <Link to='/login'>Back to login page</Link>
         </Box>
     );

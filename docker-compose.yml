@@ -34,7 +34,18 @@ services:
       - mysql-db
     networks:
       - boilerplate
-
+  client:
+    build: ./client
+    container_name: client_container
+    environment:
+      NODE_PATH: src
+    ports:
+      - 3000:3000
+    volumes:
+      - ./client:/app
+    links:
+      - server
+    
 volumes:
   db_data:
 
