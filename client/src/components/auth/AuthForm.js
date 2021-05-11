@@ -52,7 +52,6 @@ const AuthForm = (props) => {
                         variant="outlined"
                         value={email}
                         onChange={handleEmailChange}
-                        defaultValue={email}
                         required
                     />
                 </FormControl>
@@ -65,7 +64,6 @@ const AuthForm = (props) => {
                         variant="outlined"
                         value={password}
                         onChange={handlePasswordChange}
-                        defaultValue={password}
                         required
                     />
                 </FormControl>
@@ -79,7 +77,6 @@ const AuthForm = (props) => {
                             variant="outlined"
                             value={confirmPassword}
                             onChange={handleConfirmPwdChange}
-                            defaultValue={confirmPassword}
                             required
                         />
                     </FormControl>

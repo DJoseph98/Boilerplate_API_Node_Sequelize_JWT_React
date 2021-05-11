@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 export const fetchUser = async (token) => {
-    console.log('test')
     try {
         const response = await axios.get(`http://localhost:8000/api/users/fetchUser`,
             {
